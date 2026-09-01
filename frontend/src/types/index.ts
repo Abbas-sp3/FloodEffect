@@ -27,7 +27,9 @@ export interface SimulationResult {
 export interface WeatherResult {
   rain_mm: number;
   intensity: number;
-  status: 'live' | 'fallback';
+  status?: 'live' | 'fallback' | string;
+  condition?: string;
+  location?: string;
 }
 
 export interface RouteSegment {

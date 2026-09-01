@@ -30,6 +30,7 @@ interface MapViewProps {
   onMapClick: (coordinate: [number, number]) => void;
   currentPoint: [number, number] | null;
   roadBlocks: DashboardRoadBlock[];
+  apiUrl?: string;
 }
 
 const ambientLight = new AmbientLight({
@@ -67,12 +68,18 @@ export default function MapView({
   onMapClick,
   currentPoint,
   roadBlocks,
+  apiUrl = API_URL,
 }: MapViewProps) {
   const layers = useMemo(() => {
+    // Normalize depths so heatmap weights are always in [0, 1] regardless of unit scale
+    const maxDepth = activeFloodPoints.reduce((m, p) => Math.max(m, p.depth), 0.001);
+    const p20 = maxDepth * 0.2; // 20% of max = dots appear
+    const p80 = maxDepth * 0.8; // 80% of max = high-severity dots
+
     const allLayers = [
       new GeoJsonLayer({
         id: 'buildings-3d',
-        data: `${API_URL}/geojson/buildings`,
+        data: `${apiUrl}/geojson/buildings`,
         filled: true,
         extruded: is3D,
         wireframe: is3D,
@@ -100,7 +107,7 @@ export default function MapView({
 
       new GeoJsonLayer({
         id: 'water-bodies',
-        data: `${API_URL}/geojson/water`,
+        data: `${apiUrl}/geojson/water`,
         filled: true,
         extruded: false,
         getFillColor: [15, 60, 130, 160],
@@ -113,18 +120,19 @@ export default function MapView({
         id: 'flood-heatmap',
         data: activeFloodPoints,
         getPosition: (d: FloodPoint) => [d.lon, d.lat],
-        getWeight: (d: FloodPoint) => Math.max(d.depth, 0),
-        radiusPixels: 25,
-        intensity: 1.2,
-        threshold: 0.08,
+        // Normalize weight to 0-1 so heatmap is vivid at any depth scale (cm or m)
+        getWeight: (d: FloodPoint) => Math.min(1, d.depth / maxDepth),
+        radiusPixels: 28,
+        intensity: 1.5,
+        threshold: 0.04,
         colorRange: FLOOD_COLOR_RANGE,
-        opacity: 0.7,
+        opacity: 0.75,
         pickable: false,
       }),
 
       new ScatterplotLayer({
         id: 'flood-dots',
-        data: activeFloodPoints.filter((d) => d.depth > 2),
+        data: activeFloodPoints.filter((d) => d.depth >= p20),
         pickable: true,
         opacity: 0.5,
         stroked: false,
@@ -134,8 +142,8 @@ export default function MapView({
         getPosition: (d: FloodPoint) => [d.lon, d.lat],
         getRadius: (d: FloodPoint) => d.depth * 2,
         getFillColor: (d: FloodPoint) => {
-          if (d.depth > 1.0) return [255, 40, 60, 180];
-          if (d.depth > 0.3) return [255, 150, 0, 150];
+          if (d.depth >= p80) return [255, 40, 60, 180];
+          if (d.depth >= p20) return [255, 150, 0, 150];
           return [0, 200, 255, 120];
         },
       }),
@@ -262,7 +270,7 @@ export default function MapView({
     ];
 
     return allLayers;
-  }, [is3D, activeFloodPoints, emergencyData, clickPoints, routeCoords, routeSegments, currentPoint, roadBlocks]);
+  }, [is3D, activeFloodPoints, emergencyData, clickPoints, routeCoords, routeSegments, currentPoint, roadBlocks, apiUrl]);
 
   const effects = useMemo(() => (is3D ? [lightingEffect] : []), [is3D]);
 

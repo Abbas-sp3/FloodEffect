@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { ROLES, ROLE_IDS, type RoleId, type RoleConfig } from '../constants/roles';
+import { CITIES, type CityId } from '../constants';
 
 interface TopbarProps {
   currentRole: RoleId;
@@ -8,11 +9,13 @@ interface TopbarProps {
   simulationActive?: boolean;
   onClearRoute?: () => void;
   routeActive?: boolean;
+  cityId: CityId;
+  onCityChange: (city: CityId) => void;
 }
 
 export default function Topbar({ 
   currentRole, onRoleChange, intensity = 0, simulationActive = false, 
-  onClearRoute, routeActive = false 
+  onClearRoute, routeActive = false, cityId, onCityChange 
 }: TopbarProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [clock, setClock] = useState('');
@@ -51,9 +54,9 @@ export default function Topbar({
       {/* Logo */}
       <div className="cf-logo">
         <div className="cf-logo-mark" style={{ background: role.color }}>
-          CF
+          EX
         </div>
-        <span className="cf-logo-text">CrisisFlow</span>
+        <span className="cf-logo-text">EvacX</span>
       </div>
 
       <div className="cf-sep" />
@@ -102,8 +105,34 @@ export default function Topbar({
 
       <div className="cf-sep" />
 
+      {/* City Switcher */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {(['bangalore', 'kp3'] as CityId[]).map((cid) => (
+          <button
+            key={cid}
+            onClick={() => onCityChange(cid)}
+            style={{
+              padding: '4px 10px',
+              borderRadius: 7,
+              fontSize: 10,
+              fontFamily: 'var(--cf-mono)',
+              cursor: 'pointer',
+              border: cityId === cid ? `1px solid ${role.color}` : '1px solid var(--cf-border2)',
+              background: cityId === cid ? role.bg : 'transparent',
+              color: cityId === cid ? role.color : 'var(--cf-txt3)',
+              fontWeight: cityId === cid ? 600 : 400,
+              transition: '.15s',
+            }}
+          >
+            {cid === 'bangalore' ? '📍 Bangalore' : '📍 KP2 & KP3'}
+          </button>
+        ))}
+      </div>
+
+      <div className="cf-sep" />
+
       <span className="cf-forecast-label">
-        KC Valley · {simulationActive ? `Storm ${(intensity * 100).toFixed(0)}%` : 'Standby'}
+        {CITIES[cityId].areaLabel} · {simulationActive ? `Storm ${(intensity * 100).toFixed(0)}%` : 'Standby'}
       </span>
 
       <div className="cf-pill cf-pill-live">

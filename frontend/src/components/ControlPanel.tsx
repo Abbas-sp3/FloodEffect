@@ -93,7 +93,7 @@ export default function ControlPanel({
   return (
     <div className="glass-panel" id="controls">
       <h1>
-        CRISIS-FLOW <span className="badge">LIVE</span>
+        EVACX <span className="badge">LIVE</span>
       </h1>
       <p className="subtitle">STGCN Flood Surrogate — Digital Twin</p>
 

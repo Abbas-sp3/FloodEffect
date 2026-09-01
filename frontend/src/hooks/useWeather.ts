@@ -1,8 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
-import { API_URL } from '../constants';
 import type { WeatherResult } from '../types';
 
-export function useWeather() {
+export function useWeather(apiUrl: string, weatherEndpoint: string) {
   const [weatherStatus, setWeatherStatus] = useState('');
   const [weatherColor, setWeatherColor] = useState('#8b9bb4');
   const [fetching, setFetching] = useState(false);
@@ -12,10 +11,14 @@ export function useWeather() {
   const fetchWeather = useCallback(async (): Promise<number | null> => {
     setFetching(true);
     try {
-      const resp = await fetch(`${API_URL}/weather`);
+      const resp = await fetch(`${apiUrl}${weatherEndpoint}`);
       const data: WeatherResult = await resp.json();
       if (data.status === 'live') {
-        setWeatherStatus(`Live: ${data.rain_mm} mm/h rainfall in Bangalore`);
+        setWeatherStatus(`Live: ${data.rain_mm} mm/h rainfall`);
+        setWeatherColor('#4ade80');
+      } else if (data.condition) {
+        // KP3 format
+        setWeatherStatus(`${data.condition} · ${data.rain_mm ?? 0} mm/h`);
         setWeatherColor('#4ade80');
       } else {
         setWeatherStatus('Using fallback data');
@@ -29,7 +32,7 @@ export function useWeather() {
     } finally {
       setFetching(false);
     }
-  }, []);
+  }, [apiUrl, weatherEndpoint]);
 
   const toggleAutoRefresh = useCallback(
     (onRefresh: () => void) => {

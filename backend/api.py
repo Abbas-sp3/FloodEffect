@@ -17,7 +17,7 @@ import urllib.request
 import uuid
 from datetime import datetime, timezone
 
-app = FastAPI(title="Crisis-Flow Digital Twin API")
+app = FastAPI(title="EvacX Digital Twin API")
 
 app.add_middleware(
     CORSMiddleware,

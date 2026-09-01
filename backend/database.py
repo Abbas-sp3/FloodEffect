@@ -1,5 +1,5 @@
 """
-Motor async MongoDB client for CrisisFlow.
+Motor async MongoDB client for EvacX.
 """
 import os
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 MONGODB_URL = os.getenv("DATABASE_URL") or os.getenv("MONGODB_URL") or "mongodb://localhost:27017"
-DATABASE_NAME = os.getenv("DATABASE_NAME", "crisisflow")
+DATABASE_NAME = os.getenv("DATABASE_NAME", "evacx")
 
 client: AsyncIOMotorClient = None  # type: ignore
 db: AsyncIOMotorDatabase = None  # type: ignore

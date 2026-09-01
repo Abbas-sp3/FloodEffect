@@ -7,7 +7,7 @@ load_dotenv()
 
 async def check():
     url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
-    db_name = os.getenv("DATABASE_NAME", "crisisflow")
+    db_name = os.getenv("DATABASE_NAME", "evacx")
     client = AsyncIOMotorClient(url)
     db = client[db_name]
     

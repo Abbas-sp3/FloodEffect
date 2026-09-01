@@ -1,5 +1,5 @@
 """
-CrisisFlow Backend — Unified server.
+EvacX Backend — Unified server.
 Runs STGCN Digital Twin (from api.py) + MongoDB CRUD on a SINGLE port.
 
 Start with:  python main.py
@@ -45,9 +45,9 @@ async def lifespan(app: FastAPI):
         await create_indexes()
         from database import db
         await seed_database(db)
-        print("[CrisisFlow] Backend ready — STGCN + MongoDB on single port")
+        print("[EvacX] Backend ready — STGCN + MongoDB on single port")
     except Exception as e:
-        print(f"[CrisisFlow] *** STARTUP ERROR: {e} ***")
+        print(f"[EvacX] *** STARTUP ERROR: {e} ***")
         traceback.print_exc()
         raise
     yield
@@ -55,7 +55,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="CrisisFlow Emergency Response API",
+    title="EvacX Emergency Response API",
     description="Real-time flood emergency response system for Bengaluru's KC Valley Basin. "
                 "Combines STGCN flood simulation with MongoDB-backed emergency operations.",
     version="1.0.0",
@@ -103,7 +103,7 @@ async def serve_dashboard_app_js():
 @app.get("/")
 async def root():
     return {
-        "service": "CrisisFlow Emergency Response API",
+        "service": "EvacX Emergency Response API",
         "version": "1.0.0",
         "docs": "/docs",
         "stgcn_endpoints": {
@@ -143,6 +143,6 @@ if __name__ == "__main__":
     import uvicorn
     host = os.getenv("API_HOST", "0.0.0.0")
     port = int(os.getenv("API_PORT", "8000"))
-    print(f"[CrisisFlow] Starting unified server on {host}:{port}")
+    print(f"[EvacX] Starting unified server on {host}:{port}")
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
 # trigger reload

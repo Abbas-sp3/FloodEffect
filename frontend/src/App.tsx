@@ -14,17 +14,22 @@ import {
   INITIAL_VIEW_STATE,
   VIEW_STATE_2D,
   VIEW_STATE_3D,
-  EMERGENCY_INFRA,
+  CITIES,
+  type CityId,
 } from './constants';
 import type { FloodPoint, GovStats, ViewState } from './types';
 import './dashboard.css';
 
 function App() {
+  // ── City Selection ──────────────────────────────────────────────────────────
+  const [cityId, setCityId] = useState<CityId>('bangalore');
+  const city = CITIES[cityId];
+
   const [viewState, setViewState] = useState<ViewState>(INITIAL_VIEW_STATE);
   const [is3D, setIs3D] = useState(false);
   const [intensity, setIntensity] = useState(0.0);
   const [currentTimestep, setCurrentTimestep] = useState(-1);
-  const [depthThreshold, setDepthThreshold] = useState(1.0);
+  const [depthThreshold, setDepthThreshold] = useState(0.0);
   const [clusterEnabled, setClusterEnabled] = useState(true);
   const [barricadeMode, setBarricadeMode] = useState(false);
 
@@ -35,7 +40,7 @@ function App() {
   const [panelOpen, setPanelOpen] = useState(true);
 
   const { floodPoints, floodTimeline, computing, computeTime, simulate, clearSimulation } =
-    useFloodSimulation();
+    useFloodSimulation(city.apiUrl, city.simulateEndpoint);
   const {
     weatherStatus,
     weatherColor,
@@ -43,16 +48,28 @@ function App() {
     autoRefresh,
     fetchWeather,
     toggleAutoRefresh,
-  } = useWeather();
+  } = useWeather(city.apiUrl, city.weatherEndpoint);
   const {
     clickPoints, routeCoords, routeSegments, routeStatus, routeColor,
     routeInfo, handleMapClick, recalculateRoute, findNearest, clearRoute,
-  } = useRouting();
+  } = useRouting(city.apiUrl);
 
   // MongoDB dashboard data
   const { data: dashboardData, fetchDashboard, createBarricade, deleteBarricade } = useDashboard();
 
-  // Role change handler
+  // Switch city — reset everything and fly to new location
+  const handleCityChange = useCallback((newCity: CityId) => {
+    setCityId(newCity);
+    clearSimulation();
+    clearRoute();
+    setIntensity(0);
+    setCurrentTimestep(-1);
+    setIs3D(false);
+    setCurrentPoint(null);
+    const cfg = CITIES[newCity];
+    setViewState({ ...cfg.initialViewState });
+  }, [clearSimulation, clearRoute]);
+
   const handleRoleChange = useCallback((role: RoleId) => {
     setCurrentRole(role);
     fetchDashboard(role);
@@ -83,9 +100,10 @@ function App() {
   const clusteredPoints = useFloodClustering(activeFloodPoints, depthThreshold, clusterEnabled);
 
   const emergencyData = useMemo(() => {
+    const infra = city.emergencyInfra;
     const active = activeFloodPoints;
-    if (active.length === 0) return EMERGENCY_INFRA.map((f) => ({ ...f, accessible: true }));
-    return EMERGENCY_INFRA.map((f) => {
+    if (active.length === 0) return infra.map((f) => ({ ...f, accessible: true }));
+    return infra.map((f) => {
       let minDist = Infinity;
       let nearDepth = 0;
       for (const p of active) {
@@ -97,7 +115,7 @@ function App() {
       }
       return { ...f, accessible: nearDepth < 0.2 };
     });
-  }, [activeFloodPoints]);
+  }, [activeFloodPoints, city.emergencyInfra]);
 
   const govStats = useMemo((): GovStats => {
     const points = activeFloodPoints;
@@ -106,9 +124,9 @@ function App() {
     return {
       total: points.length,
       affected: points.filter((p) => p.depth > 0.05).length,
-      critical: points.filter((p) => p.depth > 1.0).length,
+      critical: points.filter((p) => p.depth > 0.4).length,
       maxDepth: Math.max(...points.map((p) => p.depth)),
-      dangerous: points.filter((p) => p.depth > 0.3).length,
+      dangerous: points.filter((p) => p.depth > 0.15).length,
     };
   }, [activeFloodPoints]);
 
@@ -229,6 +247,8 @@ function App() {
         simulationActive={intensity > 0.05}
         onClearRoute={clearRoute}
         routeActive={clickPoints.length > 0}
+        cityId={cityId}
+        onCityChange={handleCityChange}
       />
 
       <div className="cf-main">
@@ -245,6 +265,7 @@ function App() {
             onMapClick={onMapClick}
             currentPoint={currentPoint}
             roadBlocks={dashboardData?.active_road_blocks || dashboardData?.road_blocks || []}
+            apiUrl={cityId === 'kp3' ? `${city.apiUrl}/kp3` : city.apiUrl}
           />
           <RainEffect intensity={intensity} active={intensity > 0.05} />
 

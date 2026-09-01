@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import { API_URL } from '../constants';
 import type { RouteResult, RouteSegment, RouteETA } from '../types';
 
 export interface RouteInfo {
@@ -10,7 +9,7 @@ export interface RouteInfo {
   eta: RouteETA;
 }
 
-export function useRouting() {
+export function useRouting(apiUrl: string) {
   const [clickPoints, setClickPoints] = useState<[number, number][]>([]);
   const [routeCoords, setRouteCoords] = useState<number[][] | null>(null);
   const [routeSegments, setRouteSegments] = useState<RouteSegment[]>([]);
@@ -72,7 +71,7 @@ export function useRouting() {
     setLastRequest({ type: 'point2point', start, end });
 
     try {
-      const response = await fetch(`${API_URL}/route`, {
+      const response = await fetch(`${apiUrl}/route`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -90,7 +89,7 @@ export function useRouting() {
       setRouteStatus('Error calculating route.');
       setRouteColor('#ff3366');
     }
-  }, [processRouteResult]);
+  }, [processRouteResult, apiUrl]);
 
   const findNearest = useCallback(async (
     lat: number,
@@ -103,7 +102,7 @@ export function useRouting() {
     setLastRequest({ type: 'nearest', lat, lon, facilityType });
 
     try {
-      const response = await fetch(`${API_URL}/route/nearest`, {
+      const response = await fetch(`${apiUrl}/route/nearest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lat, lon, facility_type: facilityType, intensity }),
@@ -118,7 +117,7 @@ export function useRouting() {
       setRouteStatus('Error finding nearest facility.');
       setRouteColor('#ff3366');
     }
-  }, [processRouteResult]);
+  }, [processRouteResult, apiUrl]);
 
   const handleMapClick = useCallback(
     (coordinate: [number, number], intensity: number) => {

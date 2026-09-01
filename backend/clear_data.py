@@ -1,5 +1,5 @@
 """
-Utility script to clear operational data in CrisisFlow MongoDB.
+Utility script to clear operational data in EvacX MongoDB.
 Retains 'zones', 'resources', and 'hospital_capacity' (the base infrastructure).
 Clears 'dispatch_orders', 'incidents', 'triage_sessions', 'citizen_reports', and 'alerts'.
 """
@@ -12,7 +12,7 @@ load_dotenv()
 
 async def clear_db():
     url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
-    db_name = os.getenv("DATABASE_NAME", "crisisflow")
+    db_name = os.getenv("DATABASE_NAME", "evacx")
     
     print(f"[Cleanup] Connecting to {url}...")
     client = AsyncIOMotorClient(url)

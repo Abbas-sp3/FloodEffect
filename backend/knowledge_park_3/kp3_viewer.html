@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EvacX — Knowledge Park 3, Greater Noida</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/deck.gl@8.9.35/dist.min.js"></script>
+<style>
+/* ════════════════════════════════════════
+   EvacX Design System — exact clone
+   ════════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg0:#07090f;--bg1:#0d1117;--bg2:#141b27;--bg3:#1c2535;--bg4:#243042;
+  --border:#1f2d42;--border2:#2a3d57;
+  --txt:#dce6f5;--txt2:#7a91b0;--txt3:#3d5272;
+  --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;
+  --role:#3b7bff;--role-bg:#0d1f42;--role-border:#1a3a73;
+  --green:#4ade80;--red:#f87171;--orange:#fb923c;--yellow:#fbbf24;--cyan:#38bdf8;
+}
+html,body{height:100%;background:var(--bg0);font-family:var(--sans);color:var(--txt);overflow:hidden;font-size:14px}
+
+/* ── Layout Shell ── */
+.shell{display:grid;grid-template-rows:48px 1fr 52px;height:100vh;width:100vw}
+.main{display:flex;overflow:hidden;position:relative;flex:1}
+.map-wrap{flex:1;position:relative;overflow:hidden}
+
+/* ── Topbar ── */
+.topbar{
+  background:var(--bg1);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 16px;gap:12px;z-index:50;
+}
+.logo{display:flex;align-items:center;gap:8px}
+.logo-mark{
+  width:28px;height:28px;border-radius:7px;
+  background:linear-gradient(135deg,#38bdf8,#0ea5e9);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11px;font-weight:500;color:#fff;
+  box-shadow:0 0 10px rgba(56,189,248,.3);
+}
+.logo-text{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--txt)}
+.sep{width:1px;height:18px;background:var(--border2)}
+.role-btn{
+  display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;
+  font-size:11px;font-family:var(--mono);font-weight:500;cursor:pointer;
+  border:1px solid var(--role-border);background:var(--role-bg);color:var(--role);
+}
+.role-dot{width:7px;height:7px;border-radius:50%;background:var(--role)}
+.area-label{font-size:11px;font-family:var(--mono);color:var(--txt3)}
+.pill-live{
+  display:flex;align-items:center;gap:5px;font-size:11px;font-family:var(--mono);
+  padding:4px 9px;border-radius:20px;
+  background:#0a2018;border:1px solid #14532d;color:var(--green);
+}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.8s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.clear-route-btn{
+  display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:7px;
+  font-size:11px;font-family:var(--mono);font-weight:500;cursor:pointer;
+  background:#2a0d0d;border:1px solid #7f1d1d;color:var(--red);
+}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.tb-time{font-size:11px;font-family:var(--mono);color:var(--txt3)}
+.avatar{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--role-bg);border:1px solid var(--role-border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-family:var(--mono);color:var(--role);
+}
+
+/* ── Left Control Panel ── */
+.glass-panel{
+  position:absolute;top:12px;left:12px;z-index:20;
+  width:228px;max-height:calc(100% - 24px);overflow-y:auto;
+  background:rgba(13,17,23,.97);backdrop-filter:blur(12px);
+  border:1px solid var(--border);border-radius:12px;
+  box-shadow:0 20px 60px rgba(0,0,0,.6);
+  scrollbar-width:thin;scrollbar-color:var(--border2) transparent;
+}
+.glass-panel::-webkit-scrollbar{width:3px}
+.glass-panel::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.glass-panel h1{
+  font-size:20px;font-family:var(--mono);font-weight:500;color:var(--txt);
+  display:flex;align-items:center;gap:8px;padding:14px 16px 0;
+}
+.badge{
+  font-size:9px;padding:2px 7px;border-radius:20px;
+  background:#0a2018;border:1px solid #14532d;color:var(--green);
+  display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);
+}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 1.8s infinite}
+.subtitle{font-size:10px;color:var(--txt3);font-family:var(--mono);padding:3px 16px 2px}
+.location-sub{font-size:10px;color:var(--cyan);font-family:var(--mono);padding:0 16px 12px;opacity:.8}
+
+/* View Toggle */
+.view-toggle{display:flex;gap:8px;padding:8px 16px;border-top:1px solid var(--border)}
+.toggle-btn{
+  flex:1;padding:7px;border-radius:8px;font-size:11px;font-family:var(--mono);
+  font-weight:500;cursor:pointer;border:1px solid var(--border2);
+  background:var(--bg2);color:var(--txt3);transition:.15s;
+}
+.toggle-btn.active{background:#0d2a47;border-color:#1a4a7a;color:var(--cyan)}
+.toggle-btn:hover:not(.active){background:var(--bg3);color:var(--txt)}
+
+/* Sections */
+.panel-section{border-top:1px solid var(--border)}
+.section-toggle{
+  width:100%;display:flex;justify-content:space-between;align-items:center;
+  padding:10px 16px;font-size:11px;font-family:var(--mono);
+  color:var(--txt2);background:none;border:none;cursor:pointer;transition:.1s;
+  text-transform:uppercase;letter-spacing:.06em;
+}
+.section-toggle:hover{color:var(--txt);background:var(--bg3)}
+.section-chevron{font-size:10px;color:var(--txt3)}
+.section-body{padding:8px 16px 12px}
+
+/* Slider */
+.control-group{margin-bottom:10px}
+.control-group label{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:11px;color:var(--txt2);margin-bottom:6px;
+}
+.intensity-val{color:var(--cyan);font-family:var(--mono);font-weight:500}
+input[type=range]{
+  width:100%;height:3px;appearance:none;background:var(--bg3);
+  border-radius:2px;outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  appearance:none;width:12px;height:12px;border-radius:50%;
+  background:var(--cyan);cursor:pointer;box-shadow:0 0 8px rgba(56,189,248,.5);
+}
+
+/* Simulate button */
+.glow-btn{
+  width:100%;padding:10px;border-radius:8px;font-size:11px;
+  font-family:var(--mono);font-weight:500;cursor:pointer;border:none;
+  background:linear-gradient(135deg,#00b86b,#009955);color:#fff;
+  box-shadow:0 0 20px rgba(0,184,107,.3);transition:.15s;
+  text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;
+}
+.glow-btn:hover{box-shadow:0 0 28px rgba(0,184,107,.5);filter:brightness(1.1)}
+.glow-btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+
+/* Weather row */
+.weather-row{display:flex;gap:6px;margin-bottom:6px}
+.weather-btn{
+  flex:1.6;padding:7px;border-radius:7px;font-size:10px;font-family:var(--mono);
+  cursor:pointer;background:#1c1f0a;border:1px solid #354a10;color:#a3e635;
+  display:flex;align-items:center;justify-content:center;gap:5px;transition:.15s;
+}
+.weather-btn:hover{filter:brightness(1.15)}
+.auto-btn{
+  flex:1;padding:7px;border-radius:7px;font-size:10px;font-family:var(--mono);
+  cursor:pointer;background:var(--bg2);border:1px solid var(--border2);color:var(--txt3);transition:.15s;
+}
+.auto-btn.active{background:#0d2a47;border-color:#1a4a7a;color:var(--cyan)}
+.auto-btn:hover:not(.active){color:var(--txt);background:var(--bg3)}
+
+/* Weather status */
+.weather-status{font-size:10px;font-family:var(--mono);margin-top:4px;padding:5px 8px;border-radius:6px;background:var(--bg2)}
+
+/* Stats panel */
+.stats-panel{display:flex;gap:0;margin-top:8px;background:var(--bg2);border-radius:7px;border:1px solid var(--border)}
+.stat{padding:8px 12px;border-right:1px solid var(--border);flex:1}
+.stat:last-child{border-right:none}
+.stat-label{font-size:8px;font-family:var(--mono);color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px}
+.stat-value{font-size:12px;font-family:var(--mono);color:var(--txt);font-weight:500}
+
+/* Government Dashboard */
+.gov-dashboard{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.gov-stat{background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:9px 11px}
+.gov-stat-label{font-size:8px;font-family:var(--mono);color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px}
+.gov-stat-value{font-size:14px;font-family:var(--mono);font-weight:500;color:var(--txt)}
+.gov-title{font-size:10px;font-family:var(--mono);color:var(--role);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;font-weight:500}
+
+/* Timeline */
+.timeline-section{border-top:1px solid var(--border);padding:10px 16px}
+.timeline-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.timeline-label{font-size:11px;font-family:var(--mono);color:var(--txt2)}
+.timeline-toggle{display:flex;align-items:center;gap:4px}
+.tl-status{font-size:10px;font-family:var(--mono);color:var(--txt3)}
+.tl-btn{
+  padding:3px 9px;border-radius:5px;font-size:9px;font-family:var(--mono);
+  cursor:pointer;background:var(--bg3);border:1px solid var(--border2);color:var(--txt3);
+}
+.tl-btn.on{background:#0d1f42;border-color:#1a3a73;color:var(--role)}
+.tl-row{display:flex;align-items:center;gap:8px}
+.tl-slider{flex:1}
+.tl-max{
+  padding:4px 8px;border-radius:5px;font-size:9px;font-family:var(--mono);
+  cursor:pointer;background:var(--bg3);border:1px solid var(--border2);color:var(--txt3);
+}
+.tl-max:hover{color:var(--txt)}
+.tl-clear{
+  padding:4px 8px;border-radius:5px;font-size:9px;font-family:var(--mono);
+  cursor:pointer;background:#1a0a0a;border:1px solid #7f1d1d;color:var(--red);margin-top:6px;width:100%;
+}
+
+/* ── Right Panel ── */
+.rpanel{
+  width:300px;flex-shrink:0;background:var(--bg1);
+  border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;
+}
+.rp-header{padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.rp-role{font-size:13px;font-weight:500;display:flex;align-items:center;gap:7px;margin-bottom:2px}
+.rp-sub{font-size:11px;color:var(--txt3)}
+.ptabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.ptab{
+  flex:1;padding:9px 4px;text-align:center;font-size:10px;font-family:var(--mono);
+  color:var(--txt3);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;
+}
+.ptab:hover{color:var(--txt2)}
+.ptab.active{color:var(--role);border-bottom-color:var(--role)}
+.pbody{flex:1;overflow-y:auto;padding:14px 14px 20px}
+.pbody::-webkit-scrollbar{width:3px}
+.pbody::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* Simulation Metrics */
+.metric-box{
+  background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+  padding:10px 14px;margin-bottom:12px;
+}
+.metric-title{font-size:9px;font-family:var(--mono);color:var(--txt3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.avg-depth{display:flex;justify-content:space-between;align-items:center}
+.avg-label{font-size:11px;color:var(--txt2)}
+.avg-value{font-size:18px;font-family:var(--mono);font-weight:500;color:var(--cyan)}
+
+/* Zone Severity */
+.zone-section-title{font-size:9px;font-family:var(--mono);color:var(--txt3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;margin-top:14px}
+.zone-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}
+.zone-row:last-child{border-bottom:none}
+.zr-id{font-size:9px;font-family:var(--mono);color:var(--txt3);width:52px;flex-shrink:0}
+.zr-name{font-size:10px;color:var(--txt);width:90px;flex-shrink:0}
+.zr-bar-wrap{flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.zr-bar{height:100%;border-radius:2px;transition:width .6s ease}
+.zr-depth{font-size:10px;font-family:var(--mono);width:36px;text-align:right;flex-shrink:0}
+
+/* Dispatches */
+.dispatch-title{font-size:9px;font-family:var(--mono);color:var(--txt3);text-transform:uppercase;letter-spacing:.07em;margin-top:14px;margin-bottom:8px}
+.dispatch-empty{font-size:11px;color:var(--txt3)}
+
+/* Infra rows (for Resources tab) */
+.infra-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.infra-item:last-child{border-bottom:none}
+.infra-icon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.infra-name{font-size:11px;color:var(--txt);font-weight:500}
+.infra-type{font-size:9px;color:var(--txt3);font-family:var(--mono);text-transform:uppercase;margin-top:1px}
+.infra-status{font-size:9px;font-family:var(--mono);padding:2px 6px;border-radius:4px;margin-left:auto;flex-shrink:0}
+
+/* ── Bottom Bar ── */
+.bottombar{
+  background:var(--bg1);border-top:1px solid var(--border);
+  display:flex;align-items:center;padding:0 18px;gap:0;overflow:hidden;
+}
+.bmetric{display:flex;flex-direction:column;padding:0 16px;border-right:1px solid var(--border)}
+.bmetric:first-child{padding-left:0}
+.bm-val{font-size:17px;font-weight:500;font-family:var(--mono);line-height:1}
+.bm-lbl{font-size:9px;color:var(--txt3);margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
+.bottom-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+.bb-btn{
+  display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;
+  font-size:11px;font-family:var(--mono);font-weight:500;cursor:pointer;
+  transition:.15s;border:1px solid transparent;
+}
+.bb-primary{border-color:var(--role);background:var(--role-bg);color:var(--role)}
+.bb-primary:hover{filter:brightness(1.15)}
+.bb-secondary{background:var(--bg2);border-color:var(--border2);color:var(--txt2)}
+.bb-secondary:hover{background:var(--bg3);color:var(--txt)}
+
+/* ── Loading ── */
+.loading{
+  position:fixed;inset:0;z-index:200;background:rgba(7,9,15,.92);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  backdrop-filter:blur(8px);transition:opacity .4s;
+}
+.loading.done{opacity:0;pointer-events:none}
+.ld-logo{
+  width:44px;height:44px;border-radius:11px;
+  background:linear-gradient(135deg,#38bdf8,#0ea5e9);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:14px;font-weight:500;color:#fff;
+  box-shadow:0 0 30px rgba(56,189,248,.5);animation:glowpulse 2s infinite;
+}
+@keyframes glowpulse{0%,100%{box-shadow:0 0 20px rgba(56,189,248,.4)}50%{box-shadow:0 0 40px rgba(56,189,248,.7)}}
+.ld-spinner{width:34px;height:34px;border:3px solid var(--border2);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ld-text{font-size:11px;font-family:var(--mono);color:var(--txt3)}
+.ld-sub{font-size:10px;font-family:var(--mono);color:var(--txt3);opacity:.5}
+
+#deck-canvas{position:absolute;inset:0}
+</style>
+</head>
+<body>
+<div class="loading" id="loading">
+  <div class="ld-logo">EX</div>
+  <div class="ld-spinner"></div>
+  <div class="ld-text">EvacX — Knowledge Park 3</div>
+  <div class="ld-sub">Loading digital twin data...</div>
+</div>
+
+<div class="shell">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-mark">EX</div>
+      <span class="logo-text">EvacX</span>
+    </div>
+    <div class="sep"></div>
+    <div class="role-btn"><div class="role-dot"></div>Government · GNIDA</div>
+    <div class="sep"></div>
+    <span class="area-label">KP3 · Pari Chowk · Alpha</span>
+    <div class="sep"></div>
+    <div class="pill-live"><div class="live-dot"></div>LIVE</div>
+    <div id="clearRouteBtn" class="clear-route-btn" style="display:none" onclick="clearRoute()">✕ CLEAR ROUTE</div>
+    <div class="topbar-right">
+      <div class="tb-time" id="clock">00:00:00 IST</div>
+      <div class="avatar">GV</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- MAP -->
+    <div class="map-wrap">
+      <div id="deck-canvas"></div>
+
+      <!-- LEFT CONTROL PANEL -->
+      <div class="glass-panel" id="panel">
+        <h1>EVACX <span class="badge">LIVE</span></h1>
+        <p class="subtitle">STGCN Flood Surrogate — Digital Twin</p>
+        <p class="location-sub">Knowledge Park 3, Greater Noida</p>
+
+        <!-- 2D/3D Toggle -->
+        <div class="view-toggle">
+          <button class="toggle-btn" id="btn2d" onclick="setView('2d')">2D</button>
+          <button class="toggle-btn active" id="btn3d" onclick="setView('3d')">3D</button>
+        </div>
+
+        <!-- SIMULATION -->
+        <div class="panel-section">
+          <button class="section-toggle" onclick="toggleSection('sim-body','sim-chev')">
+            <span>SIMULATION</span><span class="section-chevron" id="sim-chev">▾</span>
+          </button>
+          <div class="section-body" id="sim-body">
+            <div class="control-group">
+              <label>Storm Intensity <span class="intensity-val" id="intVal">0.00</span></label>
+              <input type="range" min="0" max="1" step="0.05" value="0" id="slider" oninput="setIntensity(this.value)">
+            </div>
+            <button class="glow-btn" id="simBtn" onclick="simulate()">SIMULATE STORM</button>
+            <div class="weather-row">
+              <button class="weather-btn" id="wxBtn" onclick="fetchWeather()">🌧 Live Weather</button>
+              <button class="auto-btn" id="autoBtn" onclick="toggleAuto()">⟳ Auto</button>
+            </div>
+            <div class="weather-status" id="wxStatus" style="display:none;color:var(--cyan)"></div>
+            <div class="stats-panel">
+              <div class="stat">
+                <span class="stat-label">Compute</span>
+                <span class="stat-value" id="computeMs">-- ms</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HEATMAP FILTERS -->
+        <div class="panel-section">
+          <button class="section-toggle" onclick="toggleSection('hm-body','hm-chev')">
+            <span>HEATMAP FILTERS</span><span class="section-chevron" id="hm-chev">▸</span>
+          </button>
+          <div class="section-body" id="hm-body" style="display:none">
+            <div class="control-group">
+              <label>Min Depth <span class="intensity-val" id="depthVal">0.0 cm</span></label>
+              <input type="range" min="0" max="15" step="0.5" value="0" id="depthSlider" oninput="setDepthFilter(this.value)">
+            </div>
+          </div>
+        </div>
+
+        <!-- IMPACT ASSESSMENT -->
+        <div class="panel-section">
+          <button class="section-toggle" onclick="toggleSection('ia-body','ia-chev')">
+            <span>IMPACT ASSESSMENT</span><span class="section-chevron" id="ia-chev">▾</span>
+          </button>
+          <div class="section-body" id="ia-body">
+            <div class="gov-title">GOVERNMENT DASHBOARD</div>
+            <div class="gov-dashboard">
+              <div class="gov-stat">
+                <span class="gov-stat-label">Affected Nodes</span>
+                <span class="gov-stat-value" id="g-affected" style="color:var(--orange)">--</span>
+              </div>
+              <div class="gov-stat">
+                <span class="gov-stat-label">Critical Zones</span>
+                <span class="gov-stat-value" id="g-critical" style="color:var(--red)">--</span>
+              </div>
+              <div class="gov-stat">
+                <span class="gov-stat-label">Max Depth</span>
+                <span class="gov-stat-value" id="g-depth" style="color:var(--red)">--</span>
+              </div>
+              <div class="gov-stat">
+                <span class="gov-stat-label">High Risk</span>
+                <span class="gov-stat-value" id="g-highrisk" style="color:var(--orange)">--</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TIMELINE -->
+        <div class="timeline-section">
+          <div class="timeline-header">
+            <span class="timeline-label">Timeline:</span>
+            <div class="timeline-toggle">
+              <span class="tl-status">Off</span>
+              <button class="tl-btn" id="tlBtn" onclick="toggleTimeline()">Off</button>
+            </div>
+          </div>
+          <div class="tl-row">
+            <input type="range" class="tl-slider" min="0" max="11" step="1" value="0" id="tlSlider" oninput="setTimestep(this.value)" disabled>
+            <button class="tl-max" onclick="setTimestep(11)">MAX</button>
+          </div>
+          <button class="tl-clear" onclick="clearSimulation()" id="clearSimBtn" style="display:none">✕ Clear Simulation</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="rpanel">
+      <div class="rp-header">
+        <div class="rp-role">🏛 Government · GNIDA</div>
+        <div class="rp-sub">Control room · Full access</div>
+      </div>
+      <div class="ptabs">
+        <div class="ptab active" id="tab-overview" onclick="setTab('overview')">Overview</div>
+        <div class="ptab" id="tab-reports" onclick="setTab('reports')">Reports</div>
+        <div class="ptab" id="tab-resources" onclick="setTab('resources')">Resources</div>
+        <div class="ptab" id="tab-triage" onclick="setTab('triage')">Triage</div>
+      </div>
+      <div class="pbody" id="pbody"></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="bottombar">
+    <div class="bmetric">
+      <span class="bm-val" id="bb-nodes" style="color:var(--cyan)">1,622</span>
+      <span class="bm-lbl">Road Nodes</span>
+    </div>
+    <div class="bmetric">
+      <span class="bm-val" id="bb-bldg">2,076</span>
+      <span class="bm-lbl">3D Buildings</span>
+    </div>
+    <div class="bmetric">
+      <span class="bm-val" id="bb-flooded" style="color:var(--orange)">--</span>
+      <span class="bm-lbl">Flooded</span>
+    </div>
+    <div class="bmetric">
+      <span class="bm-val" id="bb-depth" style="color:var(--red)">--</span>
+      <span class="bm-lbl">Max Depth</span>
+    </div>
+    <div class="bmetric">
+      <span class="bm-val" id="bb-status" style="color:var(--green)">READY</span>
+      <span class="bm-lbl">System</span>
+    </div>
+    <div class="bottom-actions">
+      <button class="bb-btn bb-secondary" onclick="clearSimulation()">Reset</button>
+      <button class="bb-btn bb-primary" onclick="simulate()">⚡ Run Simulation</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8001';
+const {DeckGL, GeoJsonLayer, ScatterplotLayer, HeatmapLayer, IconLayer} = deck;
+const {AmbientLight, DirectionalLight, LightingEffect} = deck;
+
+// ─── Real infrastructure from OSM / verified coords ─────────────────────────
+// NOTE: These are verified GPS coordinates for KP3/Greater Noida area facilities
+const KP3_INFRA = [
+  // Hospitals (exact building footprints in KP3 / Pari Chowk)
+  {name:'Sharda Hospital & Trauma Center', type:'hospital', lon:77.482249, lat:28.474324},
+  {name:'Kailash Hospital Greater Noida', type:'hospital', lon:77.505000, lat:28.470884},
+  
+  // Police Stations
+  {name:'Knowledge Park Police Station', type:'police', lon:77.498500, lat:28.468500},
+  {name:'Pari Chowk Traffic Police Post', type:'police', lon:77.508200, lat:28.464000},
+  
+  // Fire Station Response
+  {name:'Kasna Fire Station Response Post', type:'fire', lon:77.506500, lat:28.465500},
+  
+  // Shelters & Emergency Relief Centers
+  {name:'India Expo Mart Relief Shelter', type:'shelter', lon:77.498342, lat:28.461727},
+  {name:'GL Bajaj Campus Shelter', type:'shelter', lon:77.488571, lat:28.472507},
+  {name:'IIMT College Campus Shelter', type:'shelter', lon:77.491141, lat:28.481823},
+  {name:'HIMT Institute Shelter', type:'shelter', lon:77.499955, lat:28.471728},
+  {name:'Cambridge School Relief Center', type:'shelter', lon:77.499590, lat:28.478192},
+];
+
+const INFRA_COLORS = {
+  hospital:[248,113,113], police:[96,165,250],
+  fire:[251,146,60],      shelter:[74,222,128],
+};
+const INFRA_BG = {
+  hospital:[248,113,113,40], police:[96,165,250,40],
+  fire:[251,146,60,40],      shelter:[74,222,128,40],
+};
+const INFRA_EMOJI = {hospital:'🏥',police:'👮',fire:'🚒',shelter:'🏠'};
+
+// ─── KP3 Zones for right panel ───────────────────────────────────────────────
+const KP3_ZONES = [
+  {id:'KP3',   name:'Knowledge Park 3', depth:0, color:'#4ade80'},
+  {id:'ALPHA', name:'Alpha Sectors',    depth:0, color:'#4ade80'},
+  {id:'BETA',  name:'Beta Sectors',     depth:0, color:'#4ade80'},
+  {id:'PARIC', name:'Pari Chowk',       depth:0, color:'#4ade80'},
+  {id:'SURJP', name:'Surajpur Road',    depth:0, color:'#4ade80'},
+];
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let is3D=true, intensity=0.0, depthFilter=0, autoRefresh=false;
+let floodPoints=[], allFloodPoints=[], buildingsData=null, waterData=null;
+let deckInstance=null, autoTimer=null, currentTab='overview', currentTimestep=0;
+let routeCoords=null, clickPoints=[];
+
+// ─── Lighting ────────────────────────────────────────────────────────────────
+const ambientLight = new AmbientLight({color:[255,255,255],intensity:2.0});
+const sunLight     = new DirectionalLight({color:[255,245,230],intensity:3.0,direction:[-3,-9,-1]});
+const sunLight2    = new DirectionalLight({color:[180,200,255],intensity:1.5,direction:[5,-8,-2]});
+const lightingEffect = new LightingEffect({ambientLight,sunLight,sunLight2});
+
+// ─── Clock ───────────────────────────────────────────────────────────────────
+function updateClock(){
+  const d=new Date();
+  document.getElementById('clock').textContent=d.toLocaleTimeString('en-IN',{hour12:false,timeZone:'Asia/Kolkata'})+' IST';
+}
+setInterval(updateClock,1000); updateClock();
+
+// ─── Init Deck.gl ─────────────────────────────────────────────────────────────
+function initDeck(){
+  deckInstance = new DeckGL({
+    container:'deck-canvas',
+    mapStyle:'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+    initialViewState:{longitude:77.4985,latitude:28.4728,zoom:14.2,pitch:58,bearing:-18},
+    controller:true,
+    layers:[],
+    effects:[lightingEffect],
+    onClick:(info)=>{
+      if(info.coordinate){
+        handleMapClick(info.coordinate);
+      }
+    },
+    getTooltip:getTooltip,
+  });
+}
+
+// ─── Layers ───────────────────────────────────────────────────────────────────
+function buildLayers(){
+  const layers=[];
+
+  // 3D Buildings — exact same params as original MapView.tsx
+  if(buildingsData){
+    layers.push(new GeoJsonLayer({
+      id:'buildings-3d',
+      data:buildingsData,
+      filled:true,
+      extruded:is3D,
+      wireframe:is3D,
+      getElevation:d => {
+        const h = d.properties?.height;
+        return (h && h > 0) ? h : 9;
+      },
+      getFillColor: is3D ? [45,55,95,240] : [20,25,40,80],
+      getLineColor: is3D ? [100,130,200,180] : [60,70,100,80],
+      elevationScale: is3D ? 5 : 0,
+      material: is3D ? {ambient:0.4,diffuse:0.8,shininess:60,specularColor:[120,160,255]} : undefined,
+      pickable:false,
+      updateTriggers:{extruded:[is3D],wireframe:[is3D],getFillColor:[is3D],getLineColor:[is3D],elevationScale:[is3D]},
+    }));
+  }
+
+  // Water bodies
+  if(waterData){
+    layers.push(new GeoJsonLayer({
+      id:'water-bodies',
+      data:waterData,
+      filled:true,
+      extruded:false,
+      getFillColor:[15,60,130,160],
+      getLineColor:[0,140,255,80],
+      lineWidthMinPixels:1,
+    }));
+  }
+
+  // Flood Heatmap
+  if(floodPoints.length>0){
+    layers.push(new HeatmapLayer({
+      id:'flood-heatmap',
+      data:floodPoints,
+      getPosition:d=>[d.lon,d.lat],
+      getWeight:d=>Math.max(d.depth,0),
+      radiusPixels:28,
+      intensity:1.4,
+      threshold:0.08,
+      colorRange:[
+        [0,255,128,25],[128,255,64,80],[255,220,0,130],
+        [255,120,0,170],[255,40,0,210],[180,0,60,255],
+      ],
+      opacity:0.72,
+    }));
+    // Critical scatter
+    layers.push(new ScatterplotLayer({
+      id:'flood-dots',
+      data:floodPoints.filter(d=>d.depth>0.3),
+      pickable:true,
+      opacity:0.55,
+      stroked:false,
+      filled:true,
+      radiusMinPixels:3,radiusMaxPixels:14,
+      getPosition:d=>[d.lon,d.lat],
+      getRadius:d=>d.depth*2,
+      getFillColor:d=>{
+        if(d.depth>0.5) return [255,40,60,180];
+        if(d.depth>0.3) return [255,150,0,150];
+        return [0,200,255,120];
+      },
+    }));
+  }
+
+  // Infrastructure background circles
+  layers.push(new ScatterplotLayer({
+    id:'infra-bg',
+    data:KP3_INFRA,
+    pickable:false,
+    opacity:0.9,
+    stroked:true,
+    filled:true,
+    radiusMinPixels:18,radiusMaxPixels:24,
+    lineWidthMinPixels:2,
+    getPosition:d=>[d.lon,d.lat],
+    getRadius:60,
+    getFillColor:d=>[...(INFRA_COLORS[d.type]||[255,255,255]),220],
+    getLineColor:[255,255,255,200],
+  }));
+
+  // Infrastructure pickable overlay
+  layers.push(new ScatterplotLayer({
+    id:'infra-pick',
+    data:KP3_INFRA,
+    pickable:true,
+    opacity:0,
+    getPosition:d=>[d.lon,d.lat],
+    getRadius:80,
+    getFillColor:[0,0,0,1],
+  }));
+
+  // Route
+  if(routeCoords && routeCoords.length>1){
+    const {PathLayer} = deck;
+    layers.push(new PathLayer({
+      id:'route-glow',
+      data:[{path:routeCoords}],
+      pickable:false,
+      widthMinPixels:14,
+      getPath:d=>d.path,
+      getColor:[0,180,255,40],
+      getWidth:14,
+      jointRounded:true,capRounded:true,
+    }));
+    layers.push(new PathLayer({
+      id:'route-line',
+      data:[{path:routeCoords}],
+      pickable:false,
+      widthMinPixels:5,
+      getPath:d=>d.path,
+      getColor:[0,200,255,220],
+      getWidth:5,
+      jointRounded:true,capRounded:true,
+    }));
+  }
+
+  // Click markers
+  if(clickPoints.length>0){
+    layers.push(new ScatterplotLayer({
+      id:'markers',
+      data:clickPoints.map((c,i)=>({pos:c,t:i})),
+      pickable:false,
+      opacity:1,
+      stroked:true,
+      filled:true,
+      radiusMinPixels:10,radiusMaxPixels:16,
+      lineWidthMinPixels:3,
+      getPosition:d=>d.pos,
+      getRadius:30,
+      getFillColor:d=>d.t===0?[0,255,130,255]:[255,80,80,255],
+      getLineColor:[255,255,255,220],
+    }));
+  }
+
+  deckInstance.setProps({layers,effects:is3D?[lightingEffect]:[]});
+}
+
+// ─── Tooltip ─────────────────────────────────────────────────────────────────
+function getTooltip({object}){
+  if(!object) return null;
+  if(object.depth!==undefined){
+    const d=object.depth;
+    const status=d>0.5?'CRITICAL':d>0.3?'HIGH RISK':d>0.15?'MODERATE':'Safe';
+    const col=d>0.5?'#f87171':d>0.3?'#fb923c':d>0.15?'#fbbf24':'#4ade80';
+    return{
+      html:`<div style="font-family:'DM Sans',sans-serif">
+        <strong style="color:${col};font-size:18px;font-family:'DM Mono',monospace">${d.toFixed(2)}m</strong><br>
+        <span style="color:#8b9bb4;font-size:10px;text-transform:uppercase">Water Depth</span><br>
+        <span style="color:${col};font-weight:600;font-size:11px">${status}</span>
+      </div>`,
+      style:{backgroundColor:'rgba(10,13,20,.95)',border:`1px solid ${col}`,borderRadius:'10px',padding:'12px 16px'},
+    };
+  }
+  if(object.name&&object.type){
+    return{
+      html:`<div style="font-family:'DM Sans',sans-serif">
+        <strong style="color:white;font-size:13px">${object.name}</strong><br>
+        <span style="color:#8b9bb4;font-size:10px;text-transform:uppercase">${object.type}</span>
+      </div>`,
+      style:{backgroundColor:'rgba(10,13,20,.95)',border:'1px solid rgba(255,255,255,.2)',borderRadius:'10px',padding:'10px 14px'},
+    };
+  }
+  return null;
+}
+
+// ─── Load Data ───────────────────────────────────────────────────────────────
+async function loadGeometry(){
+  try{
+    const [br,wr]=await Promise.all([
+      fetch(`${API}/kp3/geojson/buildings`),
+      fetch(`${API}/kp3/geojson/water`),
+    ]);
+    buildingsData=await br.json();
+    waterData=await wr.json();
+    buildLayers();
+    document.getElementById('loading').classList.add('done');
+  }catch(e){
+    console.error('Geometry load failed:',e);
+    document.getElementById('loading').classList.add('done');
+  }
+}
+
+// ─── Weather ─────────────────────────────────────────────────────────────────
+async function fetchWeather(){
+  document.getElementById('wxBtn').textContent='🌧 Fetching...';
+  try{
+    const r=await fetch(`${API}/kp3/weather`);
+    const d=await r.json();
+    const icons={'Clear / Dry':'☀️','Light Rain':'🌦️','Moderate Rain':'🌧️','Heavy Rain':'⛈️','Violent Storm':'🌩️'};
+    const icon=icons[d.condition]||'🌤️';
+    const status=`${icon} ${d.condition} · ${(d.rain_mm||0).toFixed(1)} mm/hr`;
+    document.getElementById('wxStatus').style.display='block';
+    document.getElementById('wxStatus').textContent=status;
+    if(d.intensity){setIntensity(d.intensity);document.getElementById('slider').value=d.intensity;}
+  }catch(e){
+    document.getElementById('wxStatus').style.display='block';
+    document.getElementById('wxStatus').style.color='var(--red)';
+    document.getElementById('wxStatus').textContent='Weather API unavailable';
+  }
+  document.getElementById('wxBtn').textContent='🌧 Live Weather';
+}
+
+// ─── Intensity ───────────────────────────────────────────────────────────────
+function setIntensity(v){
+  intensity=parseFloat(v);
+  document.getElementById('intVal').textContent=intensity.toFixed(2);
+}
+
+// ─── Depth Filter ────────────────────────────────────────────────────────────
+function setDepthFilter(v){
+  depthFilter=parseFloat(v);
+  document.getElementById('depthVal').textContent=depthFilter.toFixed(1)+' cm';
+  if(allFloodPoints.length>0){
+    floodPoints=allFloodPoints.filter(p=>p.depth>=depthFilter/100);
+    buildLayers();
+  }
+}
+
+// ─── Simulate ────────────────────────────────────────────────────────────────
+async function simulate(){
+  const btn=document.getElementById('simBtn');
+  btn.textContent='COMPUTING...'; btn.disabled=true;
+  document.getElementById('bb-status').textContent='COMPUTING';
+  document.getElementById('bb-status').style.color='var(--yellow)';
+
+  const t0=performance.now();
+  try{
+    const r=await fetch(`${API}/kp3/simulate`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({intensity}),
+    });
+    const data=await r.json();
+    const ms=(performance.now()-t0).toFixed(0);
+    document.getElementById('computeMs').textContent=ms+' ms';
+
+    allFloodPoints=data.features.map(f=>({
+      lon:f.geometry.coordinates[0],
+      lat:f.geometry.coordinates[1],
+      depth:f.properties.depth,
+    }));
+    floodPoints=allFloodPoints.filter(p=>p.depth>=depthFilter/100);
+    buildLayers();
+
+    const s=data.summary;
+    // Update left panel
+    document.getElementById('g-affected').textContent=s.flooded_nodes.toLocaleString();
+    document.getElementById('g-critical').textContent=s.critical_nodes.toLocaleString();
+    document.getElementById('g-depth').textContent=s.max_flood_depth.toFixed(2)+'m';
+    document.getElementById('g-highrisk').textContent=Math.round(s.critical_nodes*0.8).toLocaleString();
+    // Bottom bar
+    document.getElementById('bb-flooded').textContent=s.flooded_nodes.toLocaleString();
+    document.getElementById('bb-depth').textContent=s.max_flood_depth.toFixed(2)+'m';
+    const crit=s.max_flood_depth>0.5;
+    document.getElementById('bb-status').textContent=crit?'CRITICAL':'WARNING';
+    document.getElementById('bb-status').style.color=crit?'var(--red)':'var(--orange)';
+    // Enable timeline
+    document.getElementById('tlSlider').disabled=false;
+    document.getElementById('clearSimBtn').style.display='block';
+    // Update zones in right panel
+    updateZones(data.features);
+    renderTab(currentTab, data);
+  }catch(e){
+    alert('Simulation error: '+e.message);
+    document.getElementById('bb-status').textContent='ERROR';
+    document.getElementById('bb-status').style.color='var(--red)';
+  }
+  btn.textContent='SIMULATE STORM'; btn.disabled=false;
+}
+
+function updateZones(features){
+  const zoneBounds = [
+    {id:'KP3',   lat:[28.465,28.480], lon:[77.490,77.510]},
+    {id:'ALPHA', lat:[28.462,28.472], lon:[77.497,77.515]},
+    {id:'BETA',  lat:[28.458,28.468], lon:[77.502,77.520]},
+    {id:'PARIC', lat:[28.460,28.468], lon:[77.498,77.510]},
+    {id:'SURJP', lat:[28.455,28.465], lon:[77.495,77.510]},
+  ];
+  zoneBounds.forEach(z=>{
+    const pts=features.filter(f=>{
+      const [lon,lat]=f.geometry.coordinates;
+      return lat>=z.lat[0]&&lat<=z.lat[1]&&lon>=z.lon[0]&&lon<=z.lon[1];
+    });
+    if(pts.length){
+      const max=Math.max(...pts.map(f=>f.properties.depth));
+      z.maxDepth=max;
+      z.color=max>0.5?'#f87171':max>0.3?'#fb923c':max>0.15?'#fbbf24':'#4ade80';
+    } else {
+      z.maxDepth=0; z.color='#4ade80';
+    }
+    KP3_ZONES.find(kz=>kz.id===z.id).depth=z.maxDepth||0;
+    KP3_ZONES.find(kz=>kz.id===z.id).color=z.color;
+  });
+}
+
+// ─── Timeline ────────────────────────────────────────────────────────────────
+function toggleTimeline(){
+  const btn=document.getElementById('tlBtn');
+  const active=btn.textContent==='On';
+  btn.textContent=active?'Off':'On';
+  btn.classList.toggle('on',!active);
+  document.querySelector('.tl-status').textContent=active?'Off':'On';
+}
+function setTimestep(v){
+  currentTimestep=parseInt(v);
+  document.getElementById('tlSlider').value=v;
+}
+function toggleAuto(){
+  autoRefresh=!autoRefresh;
+  const btn=document.getElementById('autoBtn');
+  btn.classList.toggle('active',autoRefresh);
+  btn.textContent=autoRefresh?'⟳ Live':'⟳ Auto';
+  if(autoRefresh){autoTimer=setInterval(simulate,30000);}
+  else{clearInterval(autoTimer);}
+}
+function clearSimulation(){
+  floodPoints=[];allFloodPoints=[];
+  buildLayers();
+  ['g-affected','g-critical','g-depth','g-highrisk'].forEach(id=>{document.getElementById(id).textContent='--';});
+  ['bb-flooded','bb-depth'].forEach(id=>{document.getElementById(id).textContent='--';});
+  document.getElementById('bb-status').textContent='READY';
+  document.getElementById('bb-status').style.color='var(--green)';
+  document.getElementById('clearSimBtn').style.display='none';
+  document.getElementById('tlSlider').disabled=true;
+  KP3_ZONES.forEach(z=>{z.depth=0;z.color='#4ade80';});
+  renderTab(currentTab);
+}
+function clearRoute(){
+  routeCoords=null;clickPoints=[];
+  document.getElementById('clearRouteBtn').style.display='none';
+  buildLayers();
+}
+function handleMapClick(coord){
+  if(clickPoints.length<2) clickPoints.push(coord);
+  else clickPoints=[coord];
+  buildLayers();
+}
+
+// ─── View ────────────────────────────────────────────────────────────────────
+function setView(mode){
+  is3D=mode==='3d';
+  document.getElementById('btn2d').classList.toggle('active',!is3D);
+  document.getElementById('btn3d').classList.toggle('active',is3D);
+  deckInstance.setProps({
+    initialViewState:{
+      longitude:77.4985,latitude:28.4728,
+      zoom:is3D?15.0:14.2,
+      pitch:is3D?58:0,
+      bearing:is3D?-18:0,
+      transitionDuration:900,
+    },
+    effects:is3D?[lightingEffect]:[],
+  });
+  buildLayers();
+}
+
+// ─── Sections ────────────────────────────────────────────────────────────────
+function toggleSection(bodyId,chevId){
+  const body=document.getElementById(bodyId);
+  const chev=document.getElementById(chevId);
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'block';
+  chev.textContent=open?'▸':'▾';
+}
+
+// ─── Right Panel Tabs ─────────────────────────────────────────────────────────
+function setTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.ptab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  renderTab(tab);
+}
+
+function renderTab(tab, simData){
+  const pbody=document.getElementById('pbody');
+  if(tab==='overview'){
+    const avgDepth=allFloodPoints.length>0
+      ?(allFloodPoints.reduce((s,p)=>s+p.depth,0)/allFloodPoints.length*100).toFixed(2)+'cm'
+      :'--';
+    pbody.innerHTML=`
+      <div class="metric-box">
+        <div class="metric-title">Simulation Metrics</div>
+        <div class="avg-depth">
+          <span class="avg-label">Average Flood Depth</span>
+          <span class="avg-value">${avgDepth}</span>
+        </div>
+      </div>
+      <div class="zone-section-title">Zone Severity</div>
+      ${KP3_ZONES.map(z=>{
+        const pct=Math.min(z.depth/0.5*100,100).toFixed(0);
+        const depthStr=z.depth>0?(z.depth*100).toFixed(2)+'cm':'0.01cm';
+        return `<div class="zone-row">
+          <span class="zr-id">${z.id}</span>
+          <span class="zr-name">${z.name}</span>
+          <div class="zr-bar-wrap"><div class="zr-bar" style="width:${pct}%;background:${z.color}"></div></div>
+          <span class="zr-depth" style="color:${z.color}">${depthStr}</span>
+        </div>`;
+      }).join('')}
+      <div class="dispatch-title">Dispatches (0)</div>
+      <div class="dispatch-empty">No active dispatches</div>
+    `;
+  } else if(tab==='resources'){
+    pbody.innerHTML=`
+      <div style="margin-bottom:8px;font-size:9px;font-family:var(--mono);color:var(--txt3);text-transform:uppercase;letter-spacing:.07em">Emergency Infrastructure — KP3</div>
+      ${KP3_INFRA.map(p=>{
+        const col=`rgb(${INFRA_COLORS[p.type].join(',')})`;
+        return `<div class="infra-item">
+          <div class="infra-icon" style="background:${col}22;border:1px solid ${col}44">${INFRA_EMOJI[p.type]}</div>
+          <div style="flex:1;min-width:0">
+            <div class="infra-name">${p.name}</div>
+            <div class="infra-type">${p.type}</div>
+          </div>
+          <span class="infra-status" style="background:#0a2018;border:1px solid #14532d;color:var(--green)">ACTIVE</span>
+        </div>`;
+      }).join('')}
+    `;
+  } else if(tab==='reports'){
+    pbody.innerHTML=`
+      <div style="font-size:11px;color:var(--txt3);text-align:center;padding:24px 0">No citizen reports yet.</div>
+    `;
+  } else if(tab==='triage'){
+    pbody.innerHTML=`
+      <div style="font-size:11px;color:var(--txt3);text-align:center;padding:24px 0">No triage data. Run simulation first.</div>
+    `;
+  }
+}
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+initDeck();
+loadGeometry();
+fetchWeather();
+renderTab('overview');
+setInterval(updateClock,1000);
+</script>
+</body>
+</html>

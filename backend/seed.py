@@ -1,5 +1,5 @@
 """
-Seed data for CrisisFlow — realistic KC Valley Basin flood scenario.
+Seed data for EvacX — realistic KC Valley Basin flood scenario.
 Inserts zones, resources, hospitals, road blocks, and citizen reports.
 """
 from datetime import datetime, timezone, timedelta

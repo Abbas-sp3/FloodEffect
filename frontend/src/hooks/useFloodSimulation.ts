@@ -1,8 +1,7 @@
 import { useState, useCallback } from 'react';
-import { API_URL } from '../constants';
 import type { FloodPoint, SimulationResult } from '../types';
 
-export function useFloodSimulation() {
+export function useFloodSimulation(apiUrl: string, simulateEndpoint: string) {
   const [floodPoints, setFloodPoints] = useState<FloodPoint[]>([]);
   const [floodTimeline, setFloodTimeline] = useState<number[][]>([]);
   const [computing, setComputing] = useState(false);
@@ -13,7 +12,7 @@ export function useFloodSimulation() {
     const startTime = performance.now();
 
     try {
-      const response = await fetch(`${API_URL}/simulate`, {
+      const response = await fetch(`${apiUrl}${simulateEndpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ intensity }),
@@ -26,12 +25,13 @@ export function useFloodSimulation() {
       return data;
     } catch (e) {
       console.error('API Error:', e);
-      alert('Failed to connect to API. Make sure api.py is running!');
+      alert('Failed to connect to API. Make sure the backend is running!');
       return null;
     } finally {
       setComputing(false);
     }
-  }, []);
+  }, [apiUrl, simulateEndpoint]);
+
   const clearSimulation = useCallback(() => {
     setFloodPoints([]);
     setFloodTimeline([]);
