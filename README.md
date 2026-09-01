@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚨 EvacX / CrisisFlow
+# 🚨 EvacX
 ### **Next-Generation 3D Digital Twin Crisis Command & Flood AI Forecasting Platform**
 
 *A Living Geospatial City Replica Powered by Spatio-Temporal Graph AI (STGCN), Real-Time Open-Meteo Weather Telemetry, and Multi-Agency Tactical Operations.*
@@ -377,7 +377,7 @@ Output Tensor: Y ∈ ℝ^(H × N × 1)    [H: Forecast Horizon Timesteps, N: For
 ## 📂 Repository Anatomy
 
 ```
-CrisisFlow/
+EvacX/
 ├── backend/
 │   ├── api.py                     # STGCN PyTorch Digital Twin API & Graph Routing
 │   ├── database.py                # Async MongoDB connection & indexing (Motor)
@@ -460,5 +460,5 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 ---
 
 <div align="center">
-  <sub>Built with ❤️ for resilient, climate-adaptive cities. EvacX / CrisisFlow Digital Twin.</sub>
+  <sub>Built with ❤️ for resilient, climate-adaptive cities. EvacX 3D Digital Twin Platform.</sub>
 </div>
