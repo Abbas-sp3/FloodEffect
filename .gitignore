@@ -35,3 +35,17 @@ yarn-error.log*
 .idea/
 .DS_Store
 Thumbs.db
+
+# Presentations, PDFs, Pitch decks & Hackathon artifacts
+*.pptx
+*.ppt
+*.pdf
+*.key
+*presentation*
+*Presentation*
+*prompt*
+*Prompt*
+*_deck.py
+deck/
+slides/
+

@@ -35,13 +35,22 @@ During severe hydrometeorological disasters—such as flash floods and urban inu
 
 <div align="center">
 
-| **3D Digital Twin Command Center** | **AI Flood Propagation Heatmap** |
-|:---:|:---:|
-| ![EvacX 3D Command Center](https://assets.devfolio.co/hackathons/nmithacks26/projects/e34f6e2ff5a547908f322edbec367dc5/55b7d56a-3eda-4ce0-a202-b39f387189dc.png) | ![AI Simulation & Flow Dynamics](https://devfolio.co/_next/image?url=https%3A%2F%2Fassets.devfolio.co%2Fhackathons%2Fnmithacks26%2Fprojects%2Fe34f6e2ff5a547908f322edbec367dc5%2F42aac688-249f-41d4-a5e5-8ef9e2e3d4d0.png&w=1440&q=75) |
+### 🖥️ 3D Digital Twin Command Center
+> Real-time WebGL-rendered city replica with extruded building polygons, live flood depth overlays, and multi-agency responder markers — all at 60 FPS via Deck.gl v9.
 
-| **Multi-Agency Operations & Dynamic Route Optimization** |
-|:---:|
-| ![Tactical Operations & Logistics](https://devfolio.co/_next/image?url=https%3A%2F%2Fassets.devfolio.co%2Fhackathons%2Fnmithacks26%2Fprojects%2Fe34f6e2ff5a547908f322edbec367dc5%2F0b96716a-ba0a-4a60-891c-1d299ea91fea.jpeg&w=1440&q=75) |
+---
+
+### 🌊 AI Flood Propagation Heatmap
+> STGCN neural network forecasts water spread across thousands of graph nodes in sub-100ms, rendering live inundation depth contours and risk zones directly on the 3D map canvas.
+
+---
+
+### 🛣️ Multi-Agency Operations & Dynamic Route Optimization
+> Five role-tailored dashboards (Government, Police, Hospital, Fire & Rescue, Citizen) operating on a shared geospatial fabric, with water-repellent Dijkstra routing and real-time barricade injection.
+
+---
+
+> 📷 **Screenshots coming soon** — replace this section with your EvacX UI captures once available.
 
 </div>
 
